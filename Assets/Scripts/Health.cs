@@ -31,7 +31,10 @@ public class Health : MonoBehaviour
 
             //player
             if (GetComponent<PlayerMovement>() != null)
+            {
                 GetComponent<PlayerMovement>().enabled = false;
+                LoseUIManager.instance.ShowLoseUI();
+            }
 
             //enemy
             if (GetComponentInParent<EnemyPatrol>() != null)
