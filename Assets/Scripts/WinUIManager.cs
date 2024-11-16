@@ -27,7 +27,7 @@ public class WinUIManager : MonoBehaviour
     public void OnContinueButton()
     {
         Time.timeScale = 1f; 
-        Debug.Log("Continue to the next level!");
+        SceneManager.LoadScene("Level 2");
     }
 
     public void OnBackToMenuButton()

@@ -29,21 +29,33 @@ public class Health : MonoBehaviour
             anim.SetTrigger("Die");
             SoundManager.instance.PlaySound(deathSound);
 
-            //player
             if (GetComponent<PlayerMovement>() != null)
             {
                 GetComponent<PlayerMovement>().enabled = false;
                 LoseUIManager.instance.ShowLoseUI();
             }
 
-            //enemy
             if (GetComponentInParent<EnemyPatrol>() != null)
                 GetComponentInParent<EnemyPatrol>().enabled = false;
 
             if (GetComponent<EnemySlime>() != null)
                 GetComponent<EnemySlime>().enabled = false;
+
+            if (GetComponent<EnemyRedDemon>() != null)
+                GetComponent<EnemyRedDemon>().enabled = false;
+
+            StartCoroutine(DeactivateAfterAnimation());
         }
     }
+  
+
+    private IEnumerator DeactivateAfterAnimation()
+    {
+        yield return new WaitForSeconds(anim.GetCurrentAnimatorStateInfo(0).length);
+
+        gameObject.SetActive(false);
+    }
+
 
     public void healing(float _heal)
     {

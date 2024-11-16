@@ -4,24 +4,29 @@ using UnityEngine;
 
 public class PlayerAttack : MonoBehaviour
 {
-    [SerializeField] private float attackCooldown = 1;
+    [Header("References")]
     private Animator anim;
     private PlayerMovement playerMovement;
-    private float cooldownTimer = Mathf.Infinity;
 
     [Header("Ranged Attack")]
     [SerializeField] private Transform firePoint;
     [SerializeField] private GameObject[] fireballs;
+    [SerializeField] private float rangedAttackCooldown = 1;
+    private float rangedCooldownTimer = Mathf.Infinity;
 
     [Header("Melee Attack")]
     [SerializeField] private float meleeRange = 1f;
     [SerializeField] private float meleeDamage = 10f;
     [SerializeField] private Transform meleePoint;
     [SerializeField] private LayerMask enemyLayers;
+    [SerializeField] private float meleeAttackCooldown = 0.5f;
+    private float meleeCooldownTimer = Mathf.Infinity;
 
     [Header("Sounds")]
     [SerializeField] private AudioClip shootFireballSound;
     [SerializeField] private AudioClip meleeAttackSound;
+
+    private bool isAttacking = false; // Shared flag for attack state
 
     void Start()
     {
@@ -31,35 +36,52 @@ public class PlayerAttack : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.B) && cooldownTimer > attackCooldown)
+        rangedCooldownTimer += Time.deltaTime;
+        meleeCooldownTimer += Time.deltaTime;
+
+        if (!isAttacking)
         {
-            RangedAttack();
+            if (Input.GetKeyDown(KeyCode.B) && rangedCooldownTimer >= rangedAttackCooldown)
+            {
+                StartCoroutine(RangedAttack());
+            }
+
+            if (Input.GetKeyDown(KeyCode.N) && meleeCooldownTimer >= meleeAttackCooldown)
+            {
+                StartCoroutine(MeleeAttack());
+            }
         }
-
-        if (Input.GetKeyDown(KeyCode.N)) 
-        {
-            MeleeAttack();
-        }  
-
-        cooldownTimer += Time.deltaTime;
     }
 
-    private void RangedAttack()
+    private IEnumerator RangedAttack()
     {
+        isAttacking = true;
         SoundManager.instance.PlaySound(shootFireballSound);
         anim.SetTrigger("Ranged Attack");
-        cooldownTimer = 0;
+        rangedCooldownTimer = 0;
+
+        yield return new WaitForSeconds(0.1f); 
 
         int fireballIndex = CheckFireball();
         fireballs[fireballIndex].transform.position = firePoint.position;
-        fireballs[fireballIndex].GetComponent<Projectiles>().SetDirection(Mathf.Sign(transform.localScale.x)); 
+        fireballs[fireballIndex].GetComponent<Projectiles>().SetDirection(Mathf.Sign(transform.localScale.x));
+
+        yield return new WaitForSeconds(rangedAttackCooldown); 
+        isAttacking = false;
     }
 
-    private void MeleeAttack()
+    private IEnumerator MeleeAttack()
     {
+        isAttacking = true;
         anim.SetTrigger("Melee Attack");
-        SoundManager.instance.PlaySound(meleeAttackSound); 
+        SoundManager.instance.PlaySound(meleeAttackSound);
+        meleeCooldownTimer = 0;
+
+        yield return new WaitForSeconds(0.1f); 
         DealDamage();
+
+        yield return new WaitForSeconds(meleeAttackCooldown); 
+        isAttacking = false;
     }
 
     public void DealDamage()
@@ -75,7 +97,6 @@ public class PlayerAttack : MonoBehaviour
         }
     }
 
-
     private void OnDrawGizmos()
     {
         if (meleePoint != null)
@@ -84,7 +105,6 @@ public class PlayerAttack : MonoBehaviour
             Gizmos.DrawWireSphere(meleePoint.position, meleeRange);
         }
     }
-
 
     private int CheckFireball()
     {
